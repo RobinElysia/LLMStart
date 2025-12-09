@@ -4,6 +4,8 @@ This project is a high-performance Python backend service built with FastAPI,
 Transformers, and FAISS, designed to seamlessly integrate remote model inference from Java backend systems.
 The module provides a scalable RESTful API for efficient model inference services.
 
+zh: [README_ZH](README_ZH.md)
+
 ## Tech Stack
 - Python 3.11
 - FastAPI
