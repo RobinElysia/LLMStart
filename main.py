@@ -32,7 +32,6 @@ def load_env() -> Dict[str, str]:
                 line = line.strip()
                 if not line or line.startswith('#') or '=' not in line:
                     continue
-
                 key, value = line.split('=', 1)
                 # 去除值两端的引号和空格
                 env_vars[key.strip()] = value.strip().strip("'\"")
@@ -52,7 +51,8 @@ def get_input_config() -> Dict[str, str]:
             return {
                 "KEY": input("请输入 KEY: ").strip(),
                 "URL": input("请输入 URL: ").strip(),
-                "SECRET": input("请输入 SECRET: ").strip()
+                "SECRET": input("请输入 SECRET: ").strip(),
+                "MODEL_NAME": input("请输入 MODEL_NAME: ").strip()
             }
         elif choice == '2':
             return {
@@ -66,7 +66,7 @@ def identify_mode(config: Dict[str, str]) -> Tuple[Optional[str], str]:
     校验配置并识别模式
     Returns: (Mode, Description)
     """
-    if all(k in config and config[k] for k in ["KEY", "URL", "SECRET"]):
+    if all(k in config and config[k] for k in ["KEY", "URL", "SECRET", "MODEL_NAME"]):
         return "REMOTE", "远程调用模型"
     elif config.get("PATH"):
         return "LOCAL", "本地调用模型"
@@ -104,6 +104,7 @@ def main():
         key = config.get("KEY")
         secret = config.get("SECRET")
         url = config.get("URL")
+        model_name = config.get("MODEL_NAME")
         print(f"执行远程逻辑 -> URL: {config['URL']}")
     elif mode == "LOCAL":
         # 在这里执行本地逻辑
