@@ -37,7 +37,7 @@ dependencies = [
     "tensorboard==2.13.0",    # 训练日志可视化（兼容 PytorchLib-lightning、transformers）
     "torchsummary==1.5.1",
 
-    "fastapi==0.124.0"
+    "fastapi[standard]"
 ]
 
 [[tool.pip.index-url]]
