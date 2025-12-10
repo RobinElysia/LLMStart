@@ -2,7 +2,7 @@ import torch
 from transformers import AutoTokenizer, AutoModelForCausalLM
 
 
-def load_model(model_path):
+def load_model(model_path: str):
     """
     创建模型
     :param model_path: 模型本地路径
