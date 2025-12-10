@@ -2,34 +2,12 @@ import requests
 import json
 from typing import Dict, Iterator
 
-def load_model(api_key: str, api_secret: str, base_url: str, model_name: str) -> Dict:
-    """
-    创建远程模型连接配置
-    :param api_key: API密钥
-    :param api_secret: API密钥
-    :param base_url: API基础URL
-    :param model_name: 模型名称
-    :return: 返回配置字典
-    """
-    config = {
-        'api_key': api_key,
-        'api_secret': api_secret,
-        'base_url': base_url,
-        'model_name': model_name,
-        'headers': {
-            'Authorization': f'Bearer {api_key}',
-            'Content-Type': 'application/json'
-        }
-    }
-    return config
-
-
 def gen_resp_stream(config: Dict, query: str) -> Iterator[str]:
     """
     流式生成请求
     :param config: 配置字典
     :param query: 查询提示词
-    :yield: 模型生成的str片段
+    :yield: 模型生成的 str 片段
     """
     # 构建消息列表
     messages = [

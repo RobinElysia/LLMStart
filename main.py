@@ -1,3 +1,6 @@
+from transformers import PreTrainedModel, PreTrainedTokenizerBase
+
+from model import RemoteLoadModel, LocalLoadModel
 from pathlib import Path
 from typing import Dict, Optional, Tuple
 
@@ -73,7 +76,7 @@ def identify_mode(config: Dict[str, str]) -> Tuple[Optional[str], str]:
     return None, "❌ 配置无效或不完整"
 
 
-def main():
+def load() -> Dict | (PreTrainedModel, PreTrainedTokenizerBase):
     config = {}
 
     print("请选择配置来源：\n1. 读取本地 .env 文件\n2. 手动输入 (并保存)")
@@ -105,14 +108,32 @@ def main():
         secret = config.get("SECRET")
         url = config.get("URL")
         model_name = config.get("MODEL_NAME")
+        # 构造配置
+        config = {
+            'api_key': key,
+            'api_secret': secret,
+            'base_url': url,
+            'model_name': model_name,
+            'headers': {
+                'Authorization': f'Bearer {key}',
+                'Content-Type': 'application/json'
+            }
+        }
         print(f"执行远程逻辑 -> URL: {config['URL']}")
+        return config
     elif mode == "LOCAL":
         # 在这里执行本地逻辑
         path = config.get("PATH")
+        # 拿到模型和分词器
+        model, tokenizer = LocalLoadModel.load_model(path)
         print(f"执行本地逻辑 -> PATH: {config['PATH']}")
+        return model, tokenizer
     else:
         print("程序无法继续，请检查环境变量设置。")
 
 
 if __name__ == "__main__":
-    main()
+    if isinstance(load(), tuple): # 本地调用逻辑
+        model, tokenizer = load()
+    elif isinstance(load(), dict): # 远程调用逻辑
+        config = load()
