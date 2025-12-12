@@ -30,7 +30,7 @@ def gen_resp(model, tokenizer, query):
     :param model: 模型实例
     :param tokenizer: 模型分词器
     :param query: 查询提示词
-    :return: 模型生成的 str
+    :return: 模型生成的 str（基本响应）
     """
     # 构建消息列表
     messages = [

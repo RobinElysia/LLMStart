@@ -105,7 +105,7 @@ class RemoteLoadModel:
             system_message: 系统消息（可选）
 
         Returns:
-            str: 模型生成的响应
+            str: 模型生成的响应（基本响应）
         """
         from langchain_core.messages import HumanMessage, SystemMessage
 

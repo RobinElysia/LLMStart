@@ -39,7 +39,8 @@ dependencies = [
 
     "fastapi[standard]",
     "langchain",
-    "langchain-openai"
+    "langchain-openai",
+    "langchain_community"
 ]
 
 [[tool.pip.index-url]]

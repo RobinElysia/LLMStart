@@ -1,3 +1,4 @@
+from langchain_core.language_models import BaseLanguageModel
 from transformers import PreTrainedModel, PreTrainedTokenizerBase
 from pydantic import SecretStr
 from model import LocalLoadModel
@@ -80,7 +81,7 @@ def identify_mode(config: Dict[str, str]) -> Tuple[Optional[str], str]:
     return None, "❌ 配置无效或不完整"
 
 
-def load() -> Dict | (PreTrainedModel, PreTrainedTokenizerBase):
+def load() -> BaseLanguageModel | (PreTrainedModel, PreTrainedTokenizerBase):
     config = {}
 
     print("请选择配置来源：\n1. 读取本地 .env 文件\n2. 手动输入 (并保存)")
@@ -140,7 +141,3 @@ if __name__ == "__main__":
         model, tokenizer = loaded_obj
     elif hasattr(loaded_obj, 'invoke'):  # 远程调用逻辑 (LLM对象)
         llm = loaded_obj
-        # 示例查询
-        query = "什么是大语言模型？"
-        response = RemoteLoadModel.gen_resp(llm, query)
-        print(f"Query: {query}\nResponse: {response}")
