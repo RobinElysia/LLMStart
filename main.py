@@ -1,6 +1,7 @@
 from transformers import PreTrainedModel, PreTrainedTokenizerBase
-
-from model import RemoteLoadModel, LocalLoadModel
+from pydantic import SecretStr
+from model import LocalLoadModel
+from model.RemoteLoadModel import RemoteLoadModel
 from pathlib import Path
 from typing import Dict, Optional, Tuple
 
@@ -55,7 +56,8 @@ def get_input_config() -> Dict[str, str]:
                 "KEY": input("请输入 KEY: ").strip(),
                 "URL": input("请输入 URL: ").strip(),
                 "SECRET": input("请输入 SECRET: ").strip(),
-                "MODEL_NAME": input("请输入 MODEL_NAME: ").strip()
+                "MODEL_NAME": input("请输入 MODEL_NAME: ").strip(),
+                "MODEL_PROVIDER": input("请输入 MODEL_PROVIDER (默认为openai): ").strip() or "openai"
             }
         elif choice == '2':
             return {
@@ -70,6 +72,8 @@ def identify_mode(config: Dict[str, str]) -> Tuple[Optional[str], str]:
     Returns: (Mode, Description)
     """
     if all(k in config and config[k] for k in ["KEY", "URL", "SECRET", "MODEL_NAME"]):
+        return "REMOTE", "远程调用模型"
+    elif all(k in config and config[k] for k in ["KEY", "URL", "MODEL_NAME"]):
         return "REMOTE", "远程调用模型"
     elif config.get("PATH"):
         return "LOCAL", "本地调用模型"
@@ -105,35 +109,38 @@ def load() -> Dict | (PreTrainedModel, PreTrainedTokenizerBase):
     if mode == "REMOTE":
         # 在这里执行远程逻辑
         key = config.get("KEY")
-        secret = config.get("SECRET")
+        secret = config.get("SECRET", "")
         url = config.get("URL")
         model_name = config.get("MODEL_NAME")
-        # 构造配置
-        config = {
-            'api_key': key,
-            'api_secret': secret,
-            'base_url': url,
-            'model_name': model_name,
-            'headers': {
-                'Authorization': f'Bearer {key}',
-                'Content-Type': 'application/json'
-            }
-        }
-        print(f"执行远程逻辑 -> URL: {config['URL']}")
-        return config
+        model_provider = config.get("MODEL_PROVIDER")
+        # 使用RemoteLoadModel加载模型
+        llm = RemoteLoadModel.load_model(
+            api_key=SecretStr(key),
+            api_secret=secret,
+            base_url=url,
+            model_name=model_name,
+            model_provider=model_provider
+        )
+        print(f"执行远程逻辑 -> llm")
+        return llm
     elif mode == "LOCAL":
         # 在这里执行本地逻辑
         path = config.get("PATH")
         # 拿到模型和分词器
         model, tokenizer = LocalLoadModel.load_model(path)
-        print(f"执行本地逻辑 -> PATH: {config['PATH']}")
+        print(f"执行本地逻辑 -> PATH")
         return model, tokenizer
     else:
         print("程序无法继续，请检查环境变量设置。")
 
 
 if __name__ == "__main__":
-    if isinstance(load(), tuple): # 本地调用逻辑
-        model, tokenizer = load()
-    elif isinstance(load(), dict): # 远程调用逻辑
-        config = load()
+    loaded_obj = load()
+    if isinstance(loaded_obj, tuple):  # 本地调用逻辑
+        model, tokenizer = loaded_obj
+    elif hasattr(loaded_obj, 'invoke'):  # 远程调用逻辑 (LLM对象)
+        llm = loaded_obj
+        # 示例查询
+        query = "什么是大语言模型？"
+        response = RemoteLoadModel.gen_resp(llm, query)
+        print(f"Query: {query}\nResponse: {response}")

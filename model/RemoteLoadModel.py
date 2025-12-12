@@ -1,75 +1,127 @@
-import requests
-import json
-from typing import Dict, Iterator
+from typing import Any, Optional
+from pydantic import SecretStr
+from langchain_core.language_models import BaseLanguageModel
+from langchain_openai import ChatOpenAI
 
-def gen_resp_stream(config: Dict, query: str) -> Iterator[str]:
+
+class RemoteLoadModel:
     """
-    流式生成请求
-    :param config: 配置字典
-    :param query: 查询提示词
-    :yield: 模型生成的 str 片段
+    基于Langchain实现的远程模型加载类
+    支持不同厂商的模型
     """
-    # 构建消息列表
-    messages = [
-        {"role": "system", "content": "你是一个人工智能领域专家，专门研究机器学习、深度学习和强化学习"},
-        {"role": "user", "content": query}
-    ]
 
-    # 准备请求数据，添加stream=True
-    payload = {
-        "model": config['model_name'],
-        "messages": messages,
-        "max_tokens": 512,
-        "temperature": 0.7,
-        "stream": True
-    }
+    @staticmethod
+    def load_model(
+            api_key: SecretStr,
+            api_secret: str,
+            base_url: str,
+            model_name: str,
+            model_provider: str = "openai",
+            **kwargs: Any
+    ) -> BaseLanguageModel:
+        """
+        创建智能体对象
 
-    try:
-        # 发送流式请求
-        response = requests.post(
-            f"{config['base_url']}/chat/completions",
-            headers=config['headers'],
-            json=payload,
-            timeout=30,
-            stream=True
-        )
+        Args:
+            api_key: API密钥
+            api_secret: API密钥
+            base_url: API基础URL
+            model_name: 模型名称
+            model_provider: 模型提供商 ('openai', 'zhipuai', 'dashscope', 'qwen', 'moonshot' 等)
+            **kwargs: 其他参数
 
-        if response.status_code != 200:
-            yield f"请求失败: {response.status_code}, {response.text}"
-            return
+        Returns:
+            BaseLanguageModel: 语言模型实例
+        """
+        # 根据不同的模型提供商创建相应的模型实例
+        if model_provider.lower() == "openai":
+            # OpenAI 或兼容 OpenAI API 的模型服务
+            llm = ChatOpenAI(
+                model=model_name,
+                base_url=base_url,
+                api_key=api_key,
+                **kwargs
+            )
+        elif model_provider.lower() == "zhipuai":
+            # 智谱AI
+            try:
+                from langchain_community.llms import ZhipuAI
+                llm = ZhipuAI(
+                    model=model_name,
+                    api_key=api_key,
+                    **kwargs
+                )
+            except ImportError:
+                raise ImportError("请安装 langchain-community 来使用智谱AI模型")
+        elif model_provider.lower() == "dashscope":
+            # 阿里云百炼平台(通义千问)
+            try:
+                from langchain_community.llms import Tongyi
+                llm = Tongyi(
+                    model_name=model_name,
+                    dashscope_api_key=api_key,
+                    **kwargs
+                )
+            except ImportError:
+                raise ImportError("请安装 langchain-community 来使用阿里云通义千问模型")
+        elif model_provider.lower() == "qwen":
+            # 阿里云百炼平台(通义千问) - 另一种方式
+            llm = ChatOpenAI(
+                model=model_name,
+                base_url=base_url or "https://dashscope.aliyuncs.com/api/v1",
+                api_key=api_key,
+                **kwargs
+            )
+        elif model_provider.lower() == "moonshot":
+            # Moonshot AI (月之暗面)
+            llm = ChatOpenAI(
+                model=model_name,
+                base_url=base_url or "https://api.moonshot.cn/v1",
+                api_key=api_key,
+                **kwargs
+            )
+        else:
+            # 默认使用 OpenAI 兼容方式
+            llm = ChatOpenAI(
+                model=model_name,
+                base_url=base_url,
+                api_key=api_key,
+                **kwargs
+            )
+        return llm
 
-        # 解析流式响应
-        buffer = ""
-        for line in response.iter_lines():
-            if line:
-                line = line.decode('utf-8')
-                if line.startswith('data: '):
-                    data = line[6:]  # 去掉 'data: '
-                    if data == '[DONE]':
-                        break
-                    try:
-                        chunk = json.loads(data)
-                        if 'choices' in chunk and chunk['choices']:
-                            delta = chunk['choices'][0].get('delta', {})
-                            content = delta.get('content', '')
-                            if content:
-                                yield content
-                    except json.JSONDecodeError:
-                        continue
+    @staticmethod
+    def gen_resp(
+            llm: BaseLanguageModel,
+            query: str,
+            system_message: Optional[str] = "你是一个人工智能领域的大牛，只要研究机器学习、深度学习和自然语言处理"
+    ) -> str:
+        """
+        生成响应
 
-    except Exception as e:
-        yield f"请求异常: {str(e)}"
+        Args:
+            llm: 语言模型实例
+            query: 用户查询
+            system_message: 系统消息（可选）
 
-# if __name__ == "__main__":
-#     # 配置参数
-#     config = load_model(API_KEY, API_SECRET, BASE_URL, MODEL_NAME)
-#
-#     # 流式调用
-#     query = "什么是机器学习？"
-#     for chunk in gen_resp_stream(config, query):
-#         print(chunk, end="", flush=True)
-#
-#     # 或者收集完整的响应
-#     full_response = ""
-#     for chunk in gen_resp_stream(config, query):
-#         full_response += chunk
+        Returns:
+            str: 模型生成的响应
+        """
+        from langchain_core.messages import HumanMessage, SystemMessage
+
+        # 构建消息列表
+        messages = []
+
+        # 添加系统消息（如果有）
+        if system_message:
+            messages.append(SystemMessage(content=system_message))
+        else:
+            messages.append(SystemMessage(content="你是一个人工智能领域专家，专门研究机器学习、深度学习和强化学习"))
+
+        # 添加用户查询
+        messages.append(HumanMessage(content=query))
+
+        # 调用模型生成响应
+        response = llm.invoke(messages)
+
+        return response.content
