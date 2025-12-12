@@ -116,7 +116,7 @@ class RemoteLoadModel:
         if system_message:
             messages.append(SystemMessage(content=system_message))
         else:
-            messages.append(SystemMessage(content="你是一个人工智能领域专家，专门研究机器学习、深度学习和强化学习"))
+            messages.append(SystemMessage(content="你是一个人工智能领域的大牛，只要研究机器学习、深度学习和自然语言处理"))
 
         # 添加用户查询
         messages.append(HumanMessage(content=query))
