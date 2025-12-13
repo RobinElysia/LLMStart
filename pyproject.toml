@@ -29,6 +29,7 @@ dependencies = [
     "tqdm==4.66.5",
     "tensorboard==2.13.0",
     "torchsummary==1.5.1",
+    "diffusers",
     "fastapi[standard]",
     "langchain",
     "langchain-openai",

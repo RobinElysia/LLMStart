@@ -1,7 +1,7 @@
 from langchain_core.language_models import BaseLanguageModel
 from pydantic import SecretStr
 from model import LocalLoadModel
-from model.RemoteLoadModel import RemoteLoadModel
+from model.RemoteLoadModel import load_model
 from pathlib import Path
 from typing import Dict, Optional, Tuple
 
@@ -71,7 +71,7 @@ def identify_mode(config: Dict[str, str]) -> Tuple[Optional[str], str]:
     校验配置并识别模式
     Returns: (Mode, Description)
     """
-    if all(k in config and config[k] for k in ["KEY", "URL", "SECRET", "MODEL_NAME"]):
+    if all(k in config and config[k] for k in ["KEY", "URL", "SECRET", "MODEL_NAME", "MODEL_PROVIDER"]):
         return "REMOTE", "远程调用模型"
     elif all(k in config and config[k] for k in ["KEY", "URL", "MODEL_NAME"]):
         return "REMOTE", "远程调用模型"
@@ -119,7 +119,7 @@ def load() -> BaseLanguageModel | None:
         model_name = config.get("MODEL_NAME")
         model_provider = config.get("MODEL_PROVIDER")
         # 使用RemoteLoadModel加载模型
-        llm = RemoteLoadModel.load_model(
+        llm = load_model(
             api_key=SecretStr(key),
             api_secret=secret,
             base_url=url,
