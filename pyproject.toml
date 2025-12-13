@@ -9,38 +9,31 @@ version = "0.1.0"
 description = "Add your description here"
 requires-python = "==3.11.7"
 dependencies = [
-    # 解析/爬虫 - 快速、容错地抽取/清洗 HTML/XML 文本
-    "lxml==6.0.2",          # C 级高性能 XML/HTML 解析器，支持 XPath
-    "BeautifulSoup4==4.12.3", # 对不规则 HTML 友好的高层解析、搜索、遍历接口
-
-    # 数据分析 - 结构化数据二维表格化操作与统计
-    "pandas==2.2.3",        # 提供 DataFrame/Series，支撑读写、过滤、聚合、透视等全套 EDA 流程
+    "lxml==6.0.2",
+    "BeautifulSoup4==4.12.3",
+    "pandas==2.2.3",
     "pyarrow==17.0.0",
-
-    "faiss-cpu==1.9.0",     # Facebook 开源的稠密向量相似度检索库（CPU 版）
-
-    "numpy>=1.25.0", # 张量/向量化计算基石，sklearn、torch 均依赖
-
-    # 深度学习库 - Transformer 生态、PyTorch 全家桶及配套评估/加速/日志组件
-    "transformers==4.45.2",   # Hugging Face 社区预训练 SOTA 模型库（BERT/GPT/T5…）
-    "datasets==2.18.0",       # HF 社区 1000+ 标准/自定义数据集加载、缓存与处理接口
-    "evaluate",       # HF 统一封装 GLUE、ROUGE、BLEU 等常用评估指标
-    "peft==0.10.0",           # 参数高效微调（LoRA/AdaLoRA/P-tuning）官方实现
-    "accelerate==0.27.0",     # HF 分布式训练/混合精度/CPU offload 通用框架
-    "optimum",        # 针对 Intel/ONNX/OpenVINO/NVIDIA 的推理加速与量化工具箱
-    "sentencepiece==0.1.99",  # Google 子词分词器（支持 BPE/Unigram）
-    "nltk==3.9.1",           # 经典 NLP 工具集（分句、词性、情感词典等）
-    "torch==2.4.0+cu118",     # PyTorch GPU 2.2.0（CUDA 11.8）核心库
-    "torchvision==0.19.0+cu118", # 官方视觉模型/数据变换/数据集
-    "torchaudio==2.4.0+cu118", # 官方语音模型/特征提取/数据集
-    "tqdm==4.66.5",           # 进度条美化，训练/数据加载可视化
-    "tensorboard==2.13.0",    # 训练日志可视化（兼容 PytorchLib-lightning、transformers）
+    "faiss-cpu==1.9.0",
+    "numpy>=1.25.0",
+    "transformers==4.45.2",
+    "datasets==2.18.0",
+    "evaluate",
+    "peft==0.10.0",
+    "accelerate==0.27.0",
+    "optimum",
+    "sentencepiece==0.1.99",
+    "nltk==3.9.1",
+    "torch==2.4.0+cu118",
+    "torchvision==0.19.0+cu118",
+    "torchaudio==2.4.0+cu118",
+    "tqdm==4.66.5",
+    "tensorboard==2.13.0",
     "torchsummary==1.5.1",
-
     "fastapi[standard]",
     "langchain",
     "langchain-openai",
-    "langchain_community"
+    "langchain_community",
+    "langchain-huggingface"
 ]
 
 [[tool.pip.index-url]]

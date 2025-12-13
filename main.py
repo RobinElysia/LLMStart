@@ -1,5 +1,4 @@
-from langchain_core.language_models import BaseLanguageModel
-from transformers import PreTrainedModel, PreTrainedTokenizerBase
+from langchain_core.language_models import BaseLanguageModel, BaseLLM
 from pydantic import SecretStr
 from model import LocalLoadModel
 from model.RemoteLoadModel import RemoteLoadModel
@@ -81,7 +80,7 @@ def identify_mode(config: Dict[str, str]) -> Tuple[Optional[str], str]:
     return None, "❌ 配置无效或不完整"
 
 
-def load() -> BaseLanguageModel | (PreTrainedModel, PreTrainedTokenizerBase):
+def load() -> BaseLanguageModel | BaseLLM:
     config = {}
 
     print("请选择配置来源：\n1. 读取本地 .env 文件\n2. 手动输入 (并保存)")
@@ -123,21 +122,22 @@ def load() -> BaseLanguageModel | (PreTrainedModel, PreTrainedTokenizerBase):
             model_provider=model_provider
         )
         print(f"执行远程逻辑 -> llm")
-        return llm
+        return llm # 返回 BaseLanguageModel 对象
     elif mode == "LOCAL":
         # 在这里执行本地逻辑
         path = config.get("PATH")
-        # 拿到模型和分词器
-        model, tokenizer = LocalLoadModel.load_model(path)
+        # 拿到 LangChain LLM 对象
+        llm = LocalLoadModel.load_model(path)
         print(f"执行本地逻辑 -> PATH")
-        return model, tokenizer
+        return llm # 返回 BaseLLM 对象
     else:
         print("程序无法继续，请检查环境变量设置。")
 
 
 if __name__ == "__main__":
     loaded_obj = load()
-    if isinstance(loaded_obj, tuple):  # 本地调用逻辑
-        model, tokenizer = loaded_obj
-    elif hasattr(loaded_obj, 'invoke'):  # 远程调用逻辑 (LLM对象)
-        llm = loaded_obj
+    # 判断 loaded_obj 类型
+    if isinstance(loaded_obj, BaseLanguageModel):
+        print("远程调用")
+    else:
+        print("本地调用")
