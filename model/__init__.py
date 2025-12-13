@@ -1,4 +1,4 @@
-from .LocalLoadModel import load_model as load_local_model, gen_resp as gen_local_resp
-from .RemoteLoadModel import RemoteLoadModel
+from .LocalLoadModel import load_model
+from .RemoteLoadModel import load_model
 
-__all__ = ['load_local_model', 'gen_local_resp', 'RemoteLoadModel']
+__all__ = ['load_model', 'load_model', 'RemoteLoadModel', 'LocalLoadModel']

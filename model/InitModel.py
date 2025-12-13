@@ -1,3 +1,4 @@
+import torch
 from langchain_core.language_models import BaseLanguageModel
 from pydantic import SecretStr
 from model import LocalLoadModel
@@ -18,15 +19,15 @@ def save_env(env_data: Dict[str, str]) -> None:
                     f.write(f'{key}="{value}"\n')
                 else:
                     f.write(f"{key}={value}\n")
-        print(f"✅ 已保存配置到 {ENV_PATH}")
+        print(f"已保存配置到 {ENV_PATH}")
     except IOError as e:
-        print(f"❌ 写入文件失败: {e}")
+        print(f"写入文件失败: {e}")
 
 
 def load_env() -> Dict[str, str]:
     """读取 .env 文件"""
     if not ENV_PATH.exists():
-        print("❌ 未找到 .env 文件")
+        print("未找到 .env 文件")
         return {}
 
     env_vars = {}
@@ -41,7 +42,7 @@ def load_env() -> Dict[str, str]:
                 env_vars[key.strip()] = value.strip().strip("'\"")
         return env_vars
     except IOError as e:
-        print(f"❌ 读取文件失败: {e}")
+        print(f"读取文件失败: {e}")
         return {}
 
 
@@ -57,13 +58,17 @@ def get_input_config() -> Dict[str, str]:
                 "URL": input("请输入 URL: ").strip(),
                 "SECRET": input("请输入 SECRET: ").strip(),
                 "MODEL_NAME": input("请输入 MODEL_NAME: ").strip(),
-                "MODEL_PROVIDER": input("请输入 MODEL_PROVIDER (默认为openai): ").strip() or "openai"
+                "MODEL_PROVIDER": input("请输入 MODEL_PROVIDER (默认为openai): ").strip()
             }
         elif choice == '2':
             return {
-                "PATH": input("请输入 PATH: ").strip()
+                "PATH": input("请输入 PATH: ").strip(),
+                "TASK": input("请输入 TASK (可不输入): ").strip(),
+                "MODEL_TYPE": input("请输入 MODEL_TYPE (可不输入): ").strip(),
+                "TEMPERATURE": input("请输入 TEMPERATURE (可不输入): ").strip(),
+                "TORCH_DTYPE": input("请输入 TORCH_DTYPE (可不输入): ").strip()
             }
-        print("⚠️ 输入错误，请重新输入 1 或 2")
+        print("输入错误，请重新输入 1 或 2")
 
 
 def identify_mode(config: Dict[str, str]) -> Tuple[Optional[str], str]:
@@ -77,7 +82,7 @@ def identify_mode(config: Dict[str, str]) -> Tuple[Optional[str], str]:
         return "REMOTE", "远程调用模型"
     elif config.get("PATH"):
         return "LOCAL", "本地调用模型"
-    return None, "❌ 配置无效或不完整"
+    return None, "配置无效或不完整"
 
 
 def load() -> BaseLanguageModel | None:
@@ -95,7 +100,7 @@ def load() -> BaseLanguageModel | None:
         if choice == '1':
             config = load_env()
             if not config:  # 文件不存在或为空
-                print("⚠️ 读取失败，转为手动输入模式...")
+                print("读取失败，转为手动输入模式...")
                 config = get_input_config()
                 save_env(config)
             break
@@ -105,7 +110,7 @@ def load() -> BaseLanguageModel | None:
             save_env(config)
             break
 
-        print("⚠️ 输入错误，请重新输入")
+        print("输入错误，请重新输入")
 
     # 统一校验逻辑
     mode, message = identify_mode(config)
@@ -117,7 +122,7 @@ def load() -> BaseLanguageModel | None:
         secret = config.get("SECRET", "")
         url = config.get("URL")
         model_name = config.get("MODEL_NAME")
-        model_provider = config.get("MODEL_PROVIDER")
+        model_provider = config.get("MODEL_PROVIDER", "openai")
         # 使用RemoteLoadModel加载模型
         llm = load_model(
             api_key=SecretStr(key),
@@ -131,8 +136,17 @@ def load() -> BaseLanguageModel | None:
     elif mode == "LOCAL":
         # 在这里执行本地逻辑
         path = config.get("PATH")
+        task = config.get("TASK", "text-generation")
+        model_type = config.get("MODEL_TYPE", "causal") # causal, seq2seq, vision, diffusion
+        temperature = float(config.get("TEMPERATURE", "0.7"))
+        if "16" in config.get("TORCH_DTYPE"):
+            torch_dtype = torch.bfloat16
+        elif "32" in config.get("TORCH_DTYPE"):
+            torch_dtype = torch.float32
+        else:
+            torch_dtype = torch.float16
         # 拿到 LangChain LLM 对象
-        llm = LocalLoadModel.load_model(path)
+        llm = LocalLoadModel.load_model(path, task, model_type, temperature, torch_dtype)
         print(f"执行本地逻辑 -> PATH")
         print(type(llm))
         return llm # 返回 BaseLanguageModel 对象

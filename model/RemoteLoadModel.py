@@ -1,6 +1,6 @@
 from typing import Any
 from pydantic import SecretStr
-from langchain_core.language_models import BaseLanguageModel
+from langchain_core.language_models import BaseLLM
 from langchain_openai import ChatOpenAI
 
 def load_model(
@@ -10,7 +10,7 @@ def load_model(
         model_name: str,
         model_provider: str = "openai",
         **kwargs: Any
-) -> BaseLanguageModel:
+) -> BaseLLM:
     """
     创建智能体对象
 
@@ -23,7 +23,7 @@ def load_model(
         **kwargs: 其他参数
 
     Returns:
-        BaseLanguageModel: 语言模型实例
+        BaseLLM: 模型实例
     """
     # 根据不同的模型提供商创建相应的模型实例
     if model_provider.lower() == "openai":
